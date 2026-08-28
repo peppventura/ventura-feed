@@ -1,0 +1,29 @@
+name: Gerar e publicar feed XML
+
+on:
+  schedule:
+    - cron: "0 6,14,22 * * *"     # 03h, 11h e 19h de Brasilia
+  workflow_dispatch:              # botao "Run workflow" para rodar na hora
+
+jobs:
+  feed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Gerar o feed
+        env:
+          NUVEM_STORE_ID: ${{ secrets.NUVEM_STORE_ID }}
+          NUVEM_ACCESS_TOKEN: ${{ secrets.NUVEM_ACCESS_TOKEN }}
+        run: python3 feed.py --out public/feed.xml
+
+      - name: Publicar no Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name=ventura-feed --branch=main
