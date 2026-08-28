@@ -86,6 +86,11 @@ def baixar_produtos(tok):
 # ---------------------------------------------------------------- texto
 
 RX_TAG = re.compile(r"<[^>]+>")
+# linhas que nunca podem sair num feed publico: identificam o fornecedor
+RX_INTERNO = re.compile(
+    r"^\s*[-*\u2022]?\s*(c[o\u00f3]d(igo)?\.?\s*(do\s*)?fornecedor|fornecedor|"
+    r"custo|pre[c\u00e7]o\s*de\s*custo|margem|nome\s*do\s*fornecedor)\s*:",
+    re.I)
 RX_ESPACO = re.compile(r"[ \t\r\f\v]+")
 RX_LINHAS = re.compile(r"\n{3,}")
 
@@ -100,7 +105,7 @@ def texto_limpo(bruto, limite=4900):
     t = RX_TAG.sub(" ", t)
     t = html.unescape(t)
     t = RX_ESPACO.sub(" ", t)
-    t = "\n".join(l.strip() for l in t.split("\n"))
+    t = "\n".join(l.strip() for l in t.split("\n") if not RX_INTERNO.match(l))
     t = RX_LINHAS.sub("\n\n", t).strip()
     return t[:limite].rstrip()
 
