@@ -16,44 +16,31 @@ O token sai de `nuvem_token.json` (loja 5790766, não expira) ou das variáveis
 
 ## Publicação automática (grátis)
 
-O gerador **não cabe** num Cloudflare Worker do plano free: são 4,19 MB de JSON
-vindos da API e o free dá só 10 ms de CPU por invocação — inclusive no Cron
-Trigger. Por isso o trabalho está partido em dois:
+**Já está no ar:** https://peppventura.github.io/ventura-feed/feed.xml
 
-- **quem gera**: GitHub Actions, 3x ao dia (03h / 11h / 19h de Brasília)
-- **quem serve**: Cloudflare Pages, arquivo estático, sem limite de CPU
+O GitHub Actions gera o XML 3x ao dia (03h / 11h / 19h de Brasília, e a cada
+push) e o GitHub Pages serve o arquivo. Custo zero, sem token de API externo.
 
-### Passo a passo
+Para rodar na hora, sem esperar o horário: aba **Actions** → *Gerar e publicar
+feed XML* → **Run workflow**. Ou pelo terminal:
 
-1. **Cloudflare** → Workers & Pages → Create → Pages → **Upload assets**.
-   Nome do projeto: `ventura-feed`. Faça um upload qualquer só para o projeto
-   existir (o CI substitui depois).
+    gh workflow run "Gerar e publicar feed XML" -R peppventura/ventura-feed
 
-2. **Token de API da Cloudflare**: My Profile → API Tokens → Create Token →
-   template *Edit Cloudflare Workers*, ou um token customizado com a permissão
-   **Account · Cloudflare Pages · Edit**. Guarde o token e o **Account ID**
-   (fica na barra lateral de Workers & Pages).
+Secrets já cadastrados no repositório: `NUVEM_STORE_ID` e `NUVEM_ACCESS_TOKEN`.
+O repositório é público (nada sigiloso nele — os secrets seguem privados), o que
+é o que permite usar o Pages de graça.
 
-3. **GitHub**: crie um repositório **privado** e suba esta pasta.
-   O `.gitignore` já impede que `nuvem_token.json` vá junto — confira antes do
-   primeiro push.
+### Por que não é um Cloudflare Worker
 
-4. No repositório → Settings → Secrets and variables → Actions, crie:
+Não cabe no plano free: são 4,19 MB de JSON vindos da API a cada geração, contra
+**10 ms de CPU por invocação** — limite que vale também para os Cron Triggers.
+Só o parse já estoura. Daria para fazer no Workers Paid (US$ 5/mês), mas aqui
+o custo é R$ 0,00.
 
-   | Secret | Valor |
-   |---|---|
-   | `NUVEM_STORE_ID` | `5790766` |
-   | `NUVEM_ACCESS_TOKEN` | o `access_token` do `nuvem_token.json` |
-   | `CLOUDFLARE_API_TOKEN` | o token do passo 2 |
-   | `CLOUDFLARE_ACCOUNT_ID` | o Account ID do passo 2 |
+### Ligar nos canais
 
-5. Actions → *Gerar e publicar feed XML* → **Run workflow**.
-   O feed passa a viver em `https://ventura-feed.pages.dev/feed.xml`.
-
-6. Opcional: Pages → Custom domains → `feed.venturadivers.com.br`.
-
-7. Cole a URL no Merchant Center (Produtos → Feeds → feed agendado) e no
-   Gerenciador de Catálogos da Meta (Fonte de dados → Feed agendado).
+- **Google Merchant Center**: Produtos → Feeds → feed agendado, cole a URL.
+- **Meta**: Gerenciador de Catálogos → Fonte de dados → Feed agendado.
 
 ## Antes de ligar isso no Google, resolver
 
