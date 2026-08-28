@@ -4,10 +4,24 @@ on:
   schedule:
     - cron: "0 6,14,22 * * *"     # 03h, 11h e 19h de Brasilia
   workflow_dispatch:              # botao "Run workflow" para rodar na hora
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   feed:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -21,9 +35,11 @@ jobs:
           NUVEM_ACCESS_TOKEN: ${{ secrets.NUVEM_ACCESS_TOKEN }}
         run: python3 feed.py --out public/feed.xml
 
-      - name: Publicar no Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy public --project-name=ventura-feed --branch=main
+          path: public
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
